@@ -3,7 +3,6 @@ package auth
 import (
 	"fmt"
 	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +46,7 @@ func ValidateJWT(tokenString, secret string) (uuid.UUID, error) {
 
 	var userID uuid.UUID
 
-	// Parsing the Token to ensure it is signed correctly
+	// 1. Parsing the Token to ensure it is signed correctly
 	extractedToken, err := jwt.ParseWithClaims(tokenString, &claimsStruct{}, func(token *jwt.Token) (interface{}, error) {
 		// Type assserting to ensure that the token's Method is of SigningMethodHMAC
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -60,13 +59,13 @@ func ValidateJWT(tokenString, secret string) (uuid.UUID, error) {
 		return userID, fmt.Errorf("ERROR: Unable to parse token: %v", err)
 	}
 
-	// Checking if we can get Subject Field
+	// 2. Checking if we can get Subject Field
 	userIDStr, err := extractedToken.Claims.GetSubject()
 	if err != nil {
 		return userID, fmt.Errorf("ERROR: Unable to get Subject field from token: %v", err)
 	}
 
-	// Checking if we can parse the Subject Field into a UUID
+	// 3. Checking if we can parse the Subject Field into a UUID
 	userID, err = uuid.Parse(userIDStr)
 	if err != nil {
 		return userID, fmt.Errorf("ERROR: Unable to parse %s to uuid.UUID: %v", userIDStr, err)
