@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -9,21 +8,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Global config variable
-var config Config
-
 func main() {
 
-	var err error
-
-	config, err = LoadConfig()
+	config, err := LoadConfig()
 	if err != nil {
 		fmt.Printf("ERROR: %v", err)
 		return
 	}
-
-	// opening the db connection
-	_, err = sql.Open("postgres", config.DbURL)
 
 	serverMux := http.NewServeMux()
 
@@ -33,6 +24,8 @@ func main() {
 	}
 
 	serverMux.HandleFunc("/", helloWorld)
+	
+	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	server.ListenAndServe()

@@ -14,7 +14,7 @@ func helloWorld(resp http.ResponseWriter, req *http.Request) {
 }
 
 // Function to return JSON
-func (config *Config) RespondJSON(resp http.ResponseWriter, req *http.Request, payload interface{}, statusCode int) {
+func RespondJSON(resp http.ResponseWriter, req *http.Request, payload interface{}, statusCode int) {
 	ConfigureResponse(resp, statusCode, payload)
 }
 
