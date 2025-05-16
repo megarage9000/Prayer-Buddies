@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +18,10 @@ func HashPassword(password string) (string, error) {
 		return "", fmt.Errorf("ERROR: Unable to generate password")
 	}
 	return string(passwordBytes), nil
+}
+
+func CheckPasswordWithHash(password, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 // --- JSON Web Tokens ---
