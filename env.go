@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Port string
+	Port  string
+	DbURL string
 }
 
 func LoadConfig() (Config, error) {
@@ -20,9 +21,11 @@ func LoadConfig() (Config, error) {
 	}
 
 	portNumber := os.Getenv("PORT")
+	dbURL := os.Getenv("DB_URL")
 
 	return Config{
-			Port: portNumber,
+			Port:  portNumber,
+			DbURL: dbURL,
 		},
 		nil
 }
