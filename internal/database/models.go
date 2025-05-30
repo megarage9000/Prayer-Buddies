@@ -10,10 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type Prayer struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Sender    uuid.UUID
+	Receiver  uuid.UUID
+	Prayer    string
+}
+
 type User struct {
 	ID             uuid.UUID
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	Email          string
 	HashedPassword string
+	Username       string
 }
