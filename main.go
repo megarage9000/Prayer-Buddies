@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	// Importing the sql drivers
 	_ "github.com/lib/pq"
 )
+
+const TOKEN_EXPIRY = time.Hour
+const ISSUER = "Prayer Buddies"
 
 func main() {
 
@@ -24,7 +28,7 @@ func main() {
 	}
 
 	serverMux.HandleFunc("/", helloWorld)
-	
+
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 	serverMux.HandleFunc("POST /api/login", config.LoginUser)
 

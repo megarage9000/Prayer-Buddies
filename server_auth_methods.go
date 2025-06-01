@@ -11,8 +11,7 @@ import (
 	"github.com/megarage9000/Prayer-Buddies/internal/database"
 )
 
-const TOKEN_EXPIRY = time.Hour
-const ISSUER = "Prayer Buddies"
+
 
 /*
 Creating a user. This happens on registering users
