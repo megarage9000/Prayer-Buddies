@@ -4,14 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-)
 
-func helloWorld(resp http.ResponseWriter, req *http.Request) {
-	helloWorld := "Hello World!"
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte(helloWorld))
-}
+	"github.com/google/uuid"
+	"github.com/megarage9000/Prayer-Buddies/internal/auth"
+)
 
 // Function to return JSON
 func RespondJSON(resp http.ResponseWriter, req *http.Request, payload interface{}, statusCode int) {
@@ -41,4 +37,20 @@ func ConfigureResponse(resp http.ResponseWriter, statusCode int, payload interfa
 	resp.Header().Set("Content-Type", "application/json")
 	resp.WriteHeader(statusCode)
 	resp.Write(data)
+}
+
+// Function to grab a userID from http header
+func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) {
+
+	token, err := auth.GetBearerToken(header)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to get bearer token")
+	}
+
+	user, err := auth.ValidateJWT(token, config.Secret)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to validate jwt")
+	}
+
+	return user, nil
 }

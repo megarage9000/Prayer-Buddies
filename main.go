@@ -27,10 +27,9 @@ func main() {
 		Handler: serverMux,
 	}
 
-	serverMux.HandleFunc("/", helloWorld)
-
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 	serverMux.HandleFunc("POST /api/login", config.LoginUser)
+	serverMux.HandleFunc("POST /api/sendprayer", config.SendPrayerRequest)
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	server.ListenAndServe()
