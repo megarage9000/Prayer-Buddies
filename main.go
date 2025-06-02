@@ -30,6 +30,7 @@ func main() {
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 	serverMux.HandleFunc("POST /api/login", config.LoginUser)
 	serverMux.HandleFunc("POST /api/sendprayer", config.SendPrayerRequest)
+	serverMux.HandleFunc("GET /api/receivedRequests", config.ListPrayers)
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	server.ListenAndServe()

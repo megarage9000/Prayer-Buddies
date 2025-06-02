@@ -64,3 +64,36 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 	}
 	RespondJSON(resp, req, prayer, http.StatusOK)
 }
+
+/*
+Enables the user to list prayers
+TODO: enable optional parameters (i.e. scoping from which users they received from, number of prayers to receive)
+*/
+func (config *Config) ListPrayers(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Grab user from header
+	userID, err := GrabUserIDFromHeader(req.Header, *config)
+	if err != nil {
+		message := "ERROR, unable to grab user from header"
+		fmt.Println(message)
+		RespondError(resp, req, http.StatusUnauthorized, message)
+	}
+
+	// TODO: 2. Grab query parameters for prayers from req.URL.Query().Get()
+
+	// 3. Grab the list from user
+	listPrayerParams := database.GetReceivedPrayersForUserParams{
+		Receiver: userID,
+		Limit:    50, // TODO: For now use 50, need to create a constant
+	}
+
+	prayers, err := config.Database.GetReceivedPrayersForUser(req.Context(), listPrayerParams)
+	if err != nil {
+		message := "ERROR, unable to retrieve prayers from database for those receiving"
+		fmt.Println(message)
+		RespondError(resp, req, http.StatusInternalServerError, message)
+	}
+
+	// 3a. Send the prayers to receiver 
+	RespondJSON(resp, req, prayers, http.StatusAccepted)
+}

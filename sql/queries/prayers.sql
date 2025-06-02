@@ -10,6 +10,8 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetPrayersForUser :many
+-- name: GetReceivedPrayersForUser :many
 SELECT * FROM prayers
-WHERE prayers.sender = $1;
+WHERE prayers.receiver = $1
+ORDER BY prayers.created_at DESC
+LIMIT $2;

@@ -55,13 +55,20 @@ func (q *Queries) CreatePrayer(ctx context.Context, arg CreatePrayerParams) (Pra
 	return i, err
 }
 
-const getPrayersForUser = `-- name: GetPrayersForUser :many
+const getReceivedPrayersForUser = `-- name: GetReceivedPrayersForUser :many
 SELECT id, created_at, updated_at, sender, receiver, prayer FROM prayers
-WHERE prayers.sender = $1
+WHERE prayers.receiver = $1
+ORDER BY prayers.created_at DESC
+LIMIT $2
 `
 
-func (q *Queries) GetPrayersForUser(ctx context.Context, sender uuid.UUID) ([]Prayer, error) {
-	rows, err := q.db.QueryContext(ctx, getPrayersForUser, sender)
+type GetReceivedPrayersForUserParams struct {
+	Receiver uuid.UUID
+	Limit    int32
+}
+
+func (q *Queries) GetReceivedPrayersForUser(ctx context.Context, arg GetReceivedPrayersForUserParams) ([]Prayer, error) {
+	rows, err := q.db.QueryContext(ctx, getReceivedPrayersForUser, arg.Receiver, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
