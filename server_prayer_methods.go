@@ -54,6 +54,7 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 		Prayer:    result.Prayer,
 	}
 
+	// 3a. Also send the response of the JSON decode
 	prayer, err := config.Database.CreatePrayer(req.Context(), prayerParams)
 	if err != nil {
 		message := "ERROR, unable to upload prayer to database"

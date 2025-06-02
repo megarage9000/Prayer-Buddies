@@ -10,3 +10,6 @@ VALUES (
 )
 RETURNING *;
 
+-- name: GetPrayersForUser :many
+SELECT * FROM prayers
+WHERE prayers.sender = $1;

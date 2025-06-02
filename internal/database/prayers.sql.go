@@ -54,3 +54,38 @@ func (q *Queries) CreatePrayer(ctx context.Context, arg CreatePrayerParams) (Pra
 	)
 	return i, err
 }
+
+const getPrayersForUser = `-- name: GetPrayersForUser :many
+SELECT id, created_at, updated_at, sender, receiver, prayer FROM prayers
+WHERE prayers.sender = $1
+`
+
+func (q *Queries) GetPrayersForUser(ctx context.Context, sender uuid.UUID) ([]Prayer, error) {
+	rows, err := q.db.QueryContext(ctx, getPrayersForUser, sender)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Prayer
+	for rows.Next() {
+		var i Prayer
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Sender,
+			&i.Receiver,
+			&i.Prayer,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
