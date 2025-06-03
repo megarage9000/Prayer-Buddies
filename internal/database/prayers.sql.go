@@ -96,3 +96,45 @@ func (q *Queries) GetReceivedPrayersForUser(ctx context.Context, arg GetReceived
 	}
 	return items, nil
 }
+
+const getSentPrayersFromUser = `-- name: GetSentPrayersFromUser :many
+SELECT id, created_at, updated_at, sender, receiver, prayer FROM prayers
+WHERE prayers.sender = $1
+ORDER BY prayers.created_at DESC
+LIMIT $2
+`
+
+type GetSentPrayersFromUserParams struct {
+	Sender uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) GetSentPrayersFromUser(ctx context.Context, arg GetSentPrayersFromUserParams) ([]Prayer, error) {
+	rows, err := q.db.QueryContext(ctx, getSentPrayersFromUser, arg.Sender, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Prayer
+	for rows.Next() {
+		var i Prayer
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Sender,
+			&i.Receiver,
+			&i.Prayer,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

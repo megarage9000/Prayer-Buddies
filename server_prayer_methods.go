@@ -66,10 +66,10 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 }
 
 /*
-Enables the user to list prayers
+Enables the user to list prayer requests received
 TODO: enable optional parameters (i.e. scoping from which users they received from, number of prayers to receive)
 */
-func (config *Config) ListPrayers(resp http.ResponseWriter, req *http.Request) {
+func (config *Config) ListReceivedPrayerRequests(resp http.ResponseWriter, req *http.Request) {
 
 	// 1. Grab user from header
 	userID, err := GrabUserIDFromHeader(req.Header, *config)
@@ -94,6 +94,39 @@ func (config *Config) ListPrayers(resp http.ResponseWriter, req *http.Request) {
 		RespondError(resp, req, http.StatusInternalServerError, message)
 	}
 
-	// 3a. Send the prayers to receiver 
+	// 3a. Send the prayers to receiver
 	RespondJSON(resp, req, prayers, http.StatusAccepted)
+}
+
+/*
+Enables the user to list prayer requests sent
+TODO: enable optional parameters (i.e. scoping from which users they sent to, number of prayers sent)
+*/
+func (config *Config) ListSentPrayerRequests(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Grab user from header
+	userID, err := GrabUserIDFromHeader(req.Header, *config)
+	if err != nil {
+		message := "ERROR, unable to grab user from header"
+		fmt.Println(message)
+		RespondError(resp, req, http.StatusUnauthorized, message)
+	}
+
+	// TODO: 2. Grab query parameters for prayers from req.URL.Query().Get()
+
+	// 3. Grab list from user
+	prayersSentParams := database.GetSentPrayersFromUserParams{
+		Sender: userID,
+		Limit:  50, // TODO: For now use 50, need to create a constant
+	}
+
+	prayers, err := config.Database.GetSentPrayersFromUser(req.Context(), prayersSentParams)
+	if err != nil {
+		message := "ERROR, unable to retrieve prayers from database for those sending"
+		fmt.Println(message)
+		RespondError(resp, req, http.StatusInternalServerError, message)
+	}
+	
+	// 3a. Sending the sent prayer requests to user
+	RespondJSON(resp, req, prayers, http.StatusOK)
 }
