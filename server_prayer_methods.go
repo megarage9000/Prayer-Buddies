@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -18,9 +17,8 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 	// 1. Grab user ID from JWT token
 	sendingUserID, err := GrabUserIDFromHeader(req.Header, *config)
 	if err != nil {
-		message := fmt.Sprintf("ERROR, unable to grab user ID from header", err)
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusUnauthorized, message)
+		message := "Unable to grab user ID from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
 		return
 	}
 
@@ -30,18 +28,16 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 
 	err = decoder.Decode(&result)
 	if err != nil {
-		message := "ERROR, unable to decode error"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusInternalServerError, message)
+		message := "Unable to decode error"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
 		return
 	}
 
 	// 3. Send the prayer request on the database
 	receiver, err := uuid.Parse(result.Receiver)
 	if err != nil {
-		message := "ERROR, unable to parse receiver UUID"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusInternalServerError, message)
+		message := "Unable to parse receiver UUID"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
 		return
 	}
 
@@ -57,9 +53,8 @@ func (config *Config) SendPrayerRequest(resp http.ResponseWriter, req *http.Requ
 	// 3a. Also send the response of the JSON decode
 	prayer, err := config.Database.CreatePrayer(req.Context(), prayerParams)
 	if err != nil {
-		message := "ERROR, unable to upload prayer to database"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusInternalServerError, message)
+		message := "Unable to upload prayer to database"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
 		return
 	}
 	RespondJSON(resp, req, prayer, http.StatusOK)
@@ -74,9 +69,9 @@ func (config *Config) ListReceivedPrayerRequests(resp http.ResponseWriter, req *
 	// 1. Grab user from header
 	userID, err := GrabUserIDFromHeader(req.Header, *config)
 	if err != nil {
-		message := "ERROR, unable to grab user from header"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusUnauthorized, message)
+		message := "Unable to grab user from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
 	}
 
 	// TODO: 2. Grab query parameters for prayers from req.URL.Query().Get()
@@ -89,9 +84,9 @@ func (config *Config) ListReceivedPrayerRequests(resp http.ResponseWriter, req *
 
 	prayers, err := config.Database.GetReceivedPrayersForUser(req.Context(), listPrayerParams)
 	if err != nil {
-		message := "ERROR, unable to retrieve prayers from database for those receiving"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusInternalServerError, message)
+		message := "Unable to retrieve prayers from database for those receiving"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
 	}
 
 	// 3a. Send the prayers to receiver
@@ -107,9 +102,9 @@ func (config *Config) ListSentPrayerRequests(resp http.ResponseWriter, req *http
 	// 1. Grab user from header
 	userID, err := GrabUserIDFromHeader(req.Header, *config)
 	if err != nil {
-		message := "ERROR, unable to grab user from header"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusUnauthorized, message)
+		message := "Unable to grab user from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
 	}
 
 	// TODO: 2. Grab query parameters for prayers from req.URL.Query().Get()
@@ -122,11 +117,11 @@ func (config *Config) ListSentPrayerRequests(resp http.ResponseWriter, req *http
 
 	prayers, err := config.Database.GetSentPrayersFromUser(req.Context(), prayersSentParams)
 	if err != nil {
-		message := "ERROR, unable to retrieve prayers from database for those sending"
-		fmt.Println(message)
-		RespondError(resp, req, http.StatusInternalServerError, message)
+		message := "Unable to retrieve prayers from database for those sending"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
 	}
-	
+
 	// 3a. Sending the sent prayer requests to user
 	RespondJSON(resp, req, prayers, http.StatusOK)
 }

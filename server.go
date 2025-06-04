@@ -54,3 +54,9 @@ func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) 
 
 	return user, nil
 }
+
+func LogError(message string, err error, resp http.ResponseWriter, req *http.Request, statusCode int) {
+	logLine := fmt.Sprintf("ERROR: %s\n - error details: %v\n", message, err)
+	fmt.Println(logLine)
+	RespondError(resp, req, statusCode, message)
+}
