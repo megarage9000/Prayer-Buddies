@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,15 @@ type Prayer struct {
 	Sender    uuid.UUID
 	Receiver  uuid.UUID
 	Prayer    string
+}
+
+type RefreshToken struct {
+	Token     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+	RevokedAt sql.NullTime
+	UserID    uuid.UUID
 }
 
 type User struct {
