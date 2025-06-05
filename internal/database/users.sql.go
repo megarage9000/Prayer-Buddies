@@ -13,7 +13,7 @@ import (
 )
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, email, hashed_password FROM users
+SELECT id, created_at, updated_at, email, hashed_password, username FROM users
 WHERE users.email = $1
 `
 
@@ -26,6 +26,26 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.Username,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, created_at, updated_at, email, hashed_password, username FROM users
+WHERE users.username = $1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+		&i.Username,
 	)
 	return i, err
 }
@@ -39,7 +59,7 @@ VALUES (
     $4,
     $5
 )
-RETURNING id, created_at, updated_at, email, hashed_password
+RETURNING id, created_at, updated_at, email, hashed_password, username
 `
 
 type RegisterUserParams struct {
@@ -65,6 +85,7 @@ func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (Use
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.Username,
 	)
 	return i, err
 }

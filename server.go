@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/megarage9000/Prayer-Buddies/internal/auth"
 )
 
 // Function to return JSON
@@ -35,8 +38,29 @@ func ConfigureResponse(resp http.ResponseWriter, statusCode int, payload interfa
 	resp.WriteHeader(statusCode)
 	_, err = resp.Write(data)
 	if err != nil {
-		message := fmt.Sprintf("ERROR: Unable to write data in response: %v", err)
+		message := fmt.Sprintf("ERROR: unable to write data to header: %v", err)
 		fmt.Println(message)
-		return
 	}
+}
+
+// Function to grab a userID from http header
+func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) {
+
+	token, err := auth.GetBearerToken(header)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to get bearer token")
+	}
+
+	user, err := auth.ValidateJWT(token, config.Secret)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to validate jwt")
+	}
+
+	return user, nil
+}
+
+func LogError(message string, err error, resp http.ResponseWriter, req *http.Request, statusCode int) {
+	logLine := fmt.Sprintf("ERROR: %s\n - error details: %v\n", message, err)
+	fmt.Println(logLine)
+	RespondError(resp, req, statusCode, message)
 }

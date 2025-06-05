@@ -2,6 +2,8 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -77,4 +79,16 @@ func ValidateJWT(tokenString, secret string) (uuid.UUID, error) {
 	}
 
 	return userID, nil
+}
+
+// -- Helper methods --
+
+func GetBearerToken(headers http.Header) (string, error) {
+	token := headers.Get("Authorization") // This will be Bearer TOKEN
+
+	if token == "" {
+		return "", fmt.Errorf("ERROR: no bearer token found")
+	}
+
+	return strings.TrimSpace(strings.ReplaceAll(token, "Bearer", "")), nil
 }

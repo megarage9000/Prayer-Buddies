@@ -1,9 +1,12 @@
 package auth
 
 import (
-	"github.com/google/uuid"
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Testing password hashing
@@ -77,5 +80,18 @@ func TestValidateJWTExpiry(t *testing.T) {
 	_, err = ValidateJWT(token, secret)
 	if err == nil {
 		t.Fatalf("FAILED: Validation did not fail on expired token")
+	}
+}
+
+func TestBearerToken(t *testing.T) {
+	bearerToken := "I am bearer token"
+	sampleHeader := http.Header{}
+	sampleHeader.Add("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
+
+	result, err := GetBearerToken(sampleHeader)
+	if err != nil {
+		t.Fatalf("FAILED: Error in getting bearer token %s", err)
+	} else if result != bearerToken {
+		t.Fatalf("FAILED: Expected %v, got %v", bearerToken, result)
 	}
 }

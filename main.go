@@ -9,6 +9,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const TOKEN_EXPIRY = time.Hour
+const ISSUER = "Prayer Buddies"
+
 func main() {
 
 	config, err := LoadConfig()
@@ -27,6 +30,9 @@ func main() {
 
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 	serverMux.HandleFunc("POST /api/login", config.LoginUser)
+	serverMux.HandleFunc("POST /api/sendprayer", config.SendPrayerRequest)
+	serverMux.HandleFunc("GET /api/receivedRequests", config.ListReceivedPrayerRequests)
+	serverMux.HandleFunc("GET /api/sentRequests", config.ListSentPrayerRequests)
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	err = server.ListenAndServe()
