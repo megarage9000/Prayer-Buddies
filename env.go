@@ -20,7 +20,7 @@ func LoadConfig() (Config, error) {
 	err := godotenv.Load()
 
 	if err != nil {
-		return Config{}, fmt.Errorf("Unable to load environment variables")
+		return Config{}, fmt.Errorf("unable to load environment variables")
 	}
 
 	portNumber := os.Getenv("PORT")
@@ -31,7 +31,7 @@ func LoadConfig() (Config, error) {
 	db, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
-		return Config{}, fmt.Errorf("Unable to connect to database")
+		return Config{}, fmt.Errorf("unable to connect to database")
 	}
 
 	return Config{
