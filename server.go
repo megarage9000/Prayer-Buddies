@@ -6,13 +6,6 @@ import (
 	"net/http"
 )
 
-func helloWorld(resp http.ResponseWriter, req *http.Request) {
-	helloWorld := "Hello World!"
-	resp.Header().Set("Content-Type", "application/json")
-	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte(helloWorld))
-}
-
 // Function to return JSON
 func RespondJSON(resp http.ResponseWriter, req *http.Request, payload interface{}, statusCode int) {
 	ConfigureResponse(resp, statusCode, payload)
@@ -40,5 +33,10 @@ func ConfigureResponse(resp http.ResponseWriter, statusCode int, payload interfa
 	// Configuring the response
 	resp.Header().Set("Content-Type", "application/json")
 	resp.WriteHeader(statusCode)
-	resp.Write(data)
+	_, err = resp.Write(data)
+	if err != nil {
+		message := fmt.Sprintf("ERROR: Unable to write data in response: %v", err)
+		fmt.Println(message)
+		return
+	}
 }
