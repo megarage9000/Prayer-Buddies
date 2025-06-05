@@ -23,8 +23,9 @@ func main() {
 	serverMux := http.NewServeMux()
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", config.Port),
-		Handler: serverMux,
+		Addr:              fmt.Sprintf(":%s", config.Port),
+		Handler:           serverMux,
+		ReadHeaderTimeout: time.Minute,
 	}
 
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
@@ -34,5 +35,9 @@ func main() {
 	serverMux.HandleFunc("GET /api/sentRequests", config.ListSentPrayerRequests)
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
-	server.ListenAndServe()
+	err = server.ListenAndServe()
+	if err != nil {
+		fmt.Printf("ERROR: %v", err)
+		return
+	}
 }
