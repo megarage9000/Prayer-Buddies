@@ -36,7 +36,11 @@ func ConfigureResponse(resp http.ResponseWriter, statusCode int, payload interfa
 	// Configuring the response
 	resp.Header().Set("Content-Type", "application/json")
 	resp.WriteHeader(statusCode)
-	resp.Write(data)
+	_, err = resp.Write(data)
+	if err != nil {
+		message := fmt.Sprintf("ERROR: unable to write data to header: %v", err)
+		fmt.Println(message)
+	}
 }
 
 // Function to grab a userID from http header
