@@ -24,7 +24,7 @@ func main() {
 	}
 
 	serverMux.HandleFunc("/", helloWorld)
-	
+
 	serverMux.HandleFunc("POST /api/users", config.CreateUser)
 	serverMux.HandleFunc("POST /api/login", config.LoginUser)
 

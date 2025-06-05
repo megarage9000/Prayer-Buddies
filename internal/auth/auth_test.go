@@ -1,9 +1,9 @@
 package auth
 
 import (
+	"github.com/google/uuid"
 	"testing"
 	"time"
-	"github.com/google/uuid"
 )
 
 // Testing password hashing
