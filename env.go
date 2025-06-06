@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Port     string
-	Secret   string
-	Database *database.Queries
+	Port        string
+	Secret      string
+	FrontendURL string
+	Database    *database.Queries
 }
 
 func LoadConfig() (Config, error) {
@@ -26,6 +27,7 @@ func LoadConfig() (Config, error) {
 	portNumber := os.Getenv("PORT")
 	dbURL := os.Getenv("DB_URL")
 	secret := os.Getenv("SECRET")
+	frontendURL := os.Getenv("FRONTEND_URL")
 
 	// opening the db connection
 	db, err := sql.Open("postgres", dbURL)
@@ -35,9 +37,10 @@ func LoadConfig() (Config, error) {
 	}
 
 	return Config{
-			Port:     portNumber,
-			Secret:   secret,
-			Database: database.New(db),
+			Port:        portNumber,
+			Secret:      secret,
+			Database:    database.New(db),
+			FrontendURL: frontendURL,
 		},
 		nil
 }

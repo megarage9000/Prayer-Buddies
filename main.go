@@ -28,11 +28,11 @@ func main() {
 		ReadHeaderTimeout: time.Minute,
 	}
 
-	serverMux.HandleFunc("POST /api/users", config.CreateUser)
-	serverMux.HandleFunc("POST /api/login", config.LoginUser)
-	serverMux.HandleFunc("POST /api/sendprayer", config.SendPrayerRequest)
-	serverMux.HandleFunc("GET /api/receivedRequests", config.ListReceivedPrayerRequests)
-	serverMux.HandleFunc("GET /api/sentRequests", config.ListSentPrayerRequests)
+	serverMux.HandleFunc("POST /api/users", middlewareCORS(config.CreateUser, config.FrontendURL))
+	serverMux.HandleFunc("POST /api/login", middlewareCORS(config.LoginUser, config.FrontendURL))
+	serverMux.HandleFunc("POST /api/sendprayer", middlewareCORS(config.SendPrayerRequest, config.FrontendURL))
+	serverMux.HandleFunc("GET /api/receivedRequests", middlewareCORS(config.ListReceivedPrayerRequests, config.FrontendURL))
+	serverMux.HandleFunc("GET /api/sentRequests", middlewareCORS(config.ListSentPrayerRequests, config.FrontendURL))
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	err = server.ListenAndServe()
