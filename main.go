@@ -31,8 +31,8 @@ func main() {
 	serverMux.HandleFunc("POST /api/users", middlewareCORS(config.CreateUser, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/login", middlewareCORS(config.LoginUser, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/sendprayer", middlewareCORS(config.SendPrayerRequest, config.FrontendURL))
-	serverMux.HandleFunc("GET /api/receivedRequests", middlewareCORS(config.ListReceivedPrayerRequests, config.FrontendURL))
-	serverMux.HandleFunc("GET /api/sentRequests", middlewareCORS(config.ListSentPrayerRequests, config.FrontendURL))
+	serverMux.HandleFunc("/api/receivedRequests", middlewareCORS(config.ListReceivedPrayerRequests, config.FrontendURL))
+	serverMux.HandleFunc("/api/sentRequests", middlewareCORS(config.ListSentPrayerRequests, config.FrontendURL))
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	err = server.ListenAndServe()

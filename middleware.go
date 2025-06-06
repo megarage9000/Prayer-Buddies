@@ -18,6 +18,12 @@ func middlewareCORS(next http.HandlerFunc, allowedOrigin string) http.HandlerFun
 		resp.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		resp.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 
+		// Handle OPTIONS preflight
+		if req.Method == http.MethodOptions {
+			resp.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		next.ServeHTTP(resp, req)
 	})
 }
