@@ -11,4 +11,15 @@ Prayer Buddies - Backend is the backend system used for the Prayer Buddies appli
     - Sending prayer requests, uploaded to Prayer Buddies PostgreSQL Database
     - Listing sent / received prayer requests from Prayer Buddies PostgreSQL Database
 
-# :hammer: Features Under Development / To be Implemented :hammer:
+# Requirements
+
+- Linux / UNIX operating system (This was run in WSL2)
+- Go version 1.23.x
+- Postgre SQL (This was using PostgreSQL 16.9)
+
+# How To Run
+
+# Features Implemented
+
+# :hammer: TODO Checklist :hammer:
+
