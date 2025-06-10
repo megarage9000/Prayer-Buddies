@@ -18,10 +18,8 @@ type Config struct {
 
 func LoadConfig() (Config, error) {
 
-	err := godotenv.Load()
-
-	if err != nil {
-		return Config{}, fmt.Errorf("unable to load environment variables")
+	if err := godotenv.Load(); err != nil {
+		fmt.Println(".env not loaded — relying on external environment variables.")
 	}
 
 	portNumber := os.Getenv("PORT")
