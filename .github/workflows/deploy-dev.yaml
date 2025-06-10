@@ -1,0 +1,21 @@
+on:
+  push:
+    branches: ["development"]
+
+jobs:
+
+  deploy:
+    name: Deployment development
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build applications
+        run: ./scripts/builddev.sh
