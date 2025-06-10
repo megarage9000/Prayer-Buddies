@@ -4,10 +4,11 @@
 # Unignore all with extensions
 !*.*
 
-!Dockerfile
 
 # Unignore all dirs
 !*/
 
 *.txt
 *.env
+
+!Dockerfile
