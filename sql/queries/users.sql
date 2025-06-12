@@ -20,3 +20,11 @@ WHERE users.email = $1;
 -- name: GetUserByUsername :one
 SELECT * FROM users
 WHERE users.username = $1;
+
+-- name: GetUsername :one
+SELECT users.username FROM users
+WHERE users.id = $1;
+
+-- name: GetMatchingUsers :many
+SELECT users.username FROM users
+WHERE users.username ILIKE $1;
