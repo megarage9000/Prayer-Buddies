@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -85,23 +86,31 @@ func (q *Queries) DenyFriendRequest(ctx context.Context, arg DenyFriendRequestPa
 }
 
 const getFriendsFromUser = `-- name: GetFriendsFromUser :many
-SELECT friends.friend_id FROM friends
-WHERE friends.user_id = $1
+SELECT friends.friend_id, users.username 
+FROM friends
+LEFT JOIN users
+ON friends.friend_id = users.id
+WHERE friends.user_id = $1 AND friends.status = 'accepted'
 `
 
-func (q *Queries) GetFriendsFromUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+type GetFriendsFromUserRow struct {
+	FriendID uuid.UUID
+	Username sql.NullString
+}
+
+func (q *Queries) GetFriendsFromUser(ctx context.Context, userID uuid.UUID) ([]GetFriendsFromUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFriendsFromUser, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []uuid.UUID
+	var items []GetFriendsFromUserRow
 	for rows.Next() {
-		var friend_id uuid.UUID
-		if err := rows.Scan(&friend_id); err != nil {
+		var i GetFriendsFromUserRow
+		if err := rows.Scan(&i.FriendID, &i.Username); err != nil {
 			return nil, err
 		}
-		items = append(items, friend_id)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

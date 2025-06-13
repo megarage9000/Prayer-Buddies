@@ -27,5 +27,8 @@ VALUES(
 RETURNING *;
 
 -- name: GetFriendsFromUser :many
-SELECT friends.friend_id FROM friends
-WHERE friends.user_id = $1;
+SELECT friends.friend_id, users.username 
+FROM friends
+LEFT JOIN users
+ON friends.friend_id = users.id
+WHERE friends.user_id = $1 AND friends.status = 'accepted';

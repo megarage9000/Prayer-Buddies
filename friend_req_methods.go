@@ -135,3 +135,28 @@ func (config *Config) UpdateFriendRequest(resp http.ResponseWriter, req *http.Re
 	}
 
 }
+
+/*
+	Listing friends for a given users;
+*/
+
+func (config *Config) ListFriendsForUser(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Grab user from header
+	user, err := GrabUserIDFromHeader(req.Header, *config)
+	if err != nil {
+		message := "Unable to get user from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Get friends!
+	friendList, err := config.Database.GetFriendsFromUser(req.Context(), user)
+	if err != nil {
+		message := "Unable to get friends for user"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	RespondJSON(resp, req, friendList, http.StatusOK)
+}
