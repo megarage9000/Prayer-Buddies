@@ -8,6 +8,16 @@ import (
 	"github.com/megarage9000/Prayer-Buddies/internal/database"
 )
 
+const (
+	ACCEPTED = "accepted"
+	DENIED   = "denied"
+	PENDING  = "pending"
+)
+
+/*
+	Sends a friend request on the server, which will be stored on the database. The status will be stored as "pending"
+*/
+
 func (config *Config) SendFriendRequest(resp http.ResponseWriter, req *http.Request) {
 
 	//1. Grab the user from the JWT token
@@ -46,4 +56,82 @@ func (config *Config) SendFriendRequest(resp http.ResponseWriter, req *http.Requ
 	}
 
 	RespondJSON(resp, req, friendReqId, http.StatusOK)
+}
+
+/*
+Updates the friend request accordingly
+- If accepted, set status to accepted and add another row for the friend
+- If denied, remove the request
+*/
+func (config *Config) UpdateFriendRequest(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Grab the user
+	user, err := GrabUserIDFromHeader(req.Header, *config)
+	if err != nil {
+		message := "Unable to get user from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Decode response
+	decoder := json.NewDecoder(req.Body)
+	result := FriendRequestResponse{}
+	err = decoder.Decode(&result)
+	if err != nil {
+		message := "Unable to decode friend request response"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Check response and updating request
+	status := result.Status
+
+	updateFriendRequestArgs := database.UpdateFriendRequestParams{
+		UserID:   result.Respondant,
+		FriendID: user,
+		Status:   status,
+	}
+
+	err = config.Database.UpdateFriendRequest(req.Context(), updateFriendRequestArgs)
+	if err != nil {
+		message := "Could not update friend request status"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Update the result accordingly
+	switch status {
+	case ACCEPTED:
+		{
+			acceptFriendReq := database.AcceptFriendRequestParams{
+				UserID:    user,
+				FriendID:  result.Respondant,
+				CreatedAt: time.Now(),
+			}
+
+			res, err := config.Database.AcceptFriendRequest(req.Context(), acceptFriendReq)
+			if err != nil {
+				message := "Unable to add new row to represent new friend"
+				LogError(message, err, resp, req, http.StatusInternalServerError)
+				return
+			}
+
+			RespondJSON(resp, req, res, http.StatusAccepted)
+		}
+	case DENIED:
+		{
+			denyFriendReq := database.DenyFriendRequestParams{
+				UserID:   result.Respondant,
+				FriendID: user,
+			}
+
+			err = config.Database.DenyFriendRequest(req.Context(), denyFriendReq)
+			if err != nil {
+				message := "Unable to remove pending request to represent denial"
+				LogError(message, err, resp, req, http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 }

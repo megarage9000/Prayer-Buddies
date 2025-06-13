@@ -36,6 +36,7 @@ func main() {
 	serverMux.HandleFunc("/api/sentRequests", middlewareCORS(config.ListSentPrayerRequests, config.FrontendURL))
 
 	serverMux.HandleFunc("POST /api/sendFriendReq", middlewareCORS(config.SendFriendRequest, config.FrontendURL))
+	serverMux.HandleFunc("POST /api/updateFriendReq", middlewareCORS(config.UpdateFriendRequest, config.FrontendURL))
 
 	fmt.Printf("Loading on localhost:%s", config.Port)
 	err = server.ListenAndServe()

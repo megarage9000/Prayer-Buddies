@@ -10,7 +10,7 @@ RETURNING *;
 -- name: UpdateFriendRequest :exec
 UPDATE friends
 SET status = $3
-WHERE friends.user_id = $1 AND friends.friend_id = $2 AND friend.status != 'pending';
+WHERE friends.user_id = $1 AND friends.friend_id = $2;
 
 -- name: DenyFriendRequest :exec
 DELETE FROM friends
