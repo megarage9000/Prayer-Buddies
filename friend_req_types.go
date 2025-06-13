@@ -8,5 +8,5 @@ type FriendRequest struct {
 
 type FriendRequestResponse struct {
 	Respondant uuid.UUID `json:"respondant"`
-	Status string    `json: "status"`
+	Status     string    `json: "status"`
 }
