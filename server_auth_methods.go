@@ -162,7 +162,7 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 	// 4. Return JWT token
 	payload := struct {
 		token string
-	} {
+	}{
 		token: jsonToken,
 	}
 
