@@ -11,6 +11,10 @@ type UserCreateRequest struct {
 	Password string `json: "password"`
 }
 
+type UserSetUsernameRequest struct {
+	Username string `json: "username"`
+}
+
 type UserResponse struct {
 	ID        uuid.UUID `json: "id"`
 	CreatedAt time.Time `json: "created_at"`

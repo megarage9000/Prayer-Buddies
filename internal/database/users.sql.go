@@ -138,3 +138,19 @@ func (q *Queries) Reset(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, reset)
 	return err
 }
+
+const setUsername = `-- name: SetUsername :exec
+UPDATE users
+SET username = $2
+WHERE users.id = $1
+`
+
+type SetUsernameParams struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) SetUsername(ctx context.Context, arg SetUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, setUsername, arg.ID, arg.Username)
+	return err
+}
