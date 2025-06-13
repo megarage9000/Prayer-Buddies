@@ -126,3 +126,44 @@ func (config *Config) LoginUser(resp http.ResponseWriter, req *http.Request) {
 
 	RespondJSON(resp, req, responseBody, http.StatusOK)
 }
+
+/*
+Set username
+*/
+
+func (config *Config) SetUsername(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Get User from server
+	user, err := GrabUserIDFromHeader(req.Header, *config)
+	if err != nil {
+		message := "Unable to grab user from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Get username data
+	decoder := json.NewDecoder(req.Body)
+	result := UserSetUsernameRequest{}
+
+	err = decoder.Decode(&result)
+	if err != nil {
+		message := "Unable to decode set username response"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Update user with data
+	usernameParams := database.SetUsernameParams{
+		ID:       user,
+		Username: result.Username,
+	}
+
+	err = config.Database.SetUsername(req.Context(), usernameParams)
+	if err != nil {
+		message := "Unable to set username for user"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	resp.WriteHeader(http.StatusAccepted)
+}

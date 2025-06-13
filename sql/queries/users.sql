@@ -13,6 +13,11 @@ RETURNING *;
 -- name: Reset :exec
 DELETE FROM users;
 
+-- name: SetUsername :exec
+UPDATE users
+SET username = $2
+WHERE users.id = $1;
+
 -- name: GetUserByEmail :one
 SELECT * FROM users
 WHERE users.email = $1;
@@ -20,3 +25,11 @@ WHERE users.email = $1;
 -- name: GetUserByUsername :one
 SELECT * FROM users
 WHERE users.username = $1;
+
+-- name: GetUsername :one
+SELECT users.username FROM users
+WHERE users.id = $1;
+
+-- name: GetMatchingUsers :many
+SELECT users.username FROM users
+WHERE users.username ILIKE $1;

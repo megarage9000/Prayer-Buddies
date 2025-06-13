@@ -1,0 +1,1 @@
+docker build -t prayer-buddies-server-dev:latest .

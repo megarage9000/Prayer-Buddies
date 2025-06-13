@@ -12,6 +12,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const getMatchingUsers = `-- name: GetMatchingUsers :many
+SELECT users.username FROM users
+WHERE users.username ILIKE $1
+`
+
+func (q *Queries) GetMatchingUsers(ctx context.Context, username string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getMatchingUsers, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, err
+		}
+		items = append(items, username)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, created_at, updated_at, email, hashed_password, username FROM users
 WHERE users.email = $1
@@ -48,6 +76,18 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Username,
 	)
 	return i, err
+}
+
+const getUsername = `-- name: GetUsername :one
+SELECT users.username FROM users
+WHERE users.id = $1
+`
+
+func (q *Queries) GetUsername(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUsername, id)
+	var username string
+	err := row.Scan(&username)
+	return username, err
 }
 
 const registerUser = `-- name: RegisterUser :one
@@ -96,5 +136,21 @@ DELETE FROM users
 
 func (q *Queries) Reset(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, reset)
+	return err
+}
+
+const setUsername = `-- name: SetUsername :exec
+UPDATE users
+SET username = $2
+WHERE users.id = $1
+`
+
+type SetUsernameParams struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) SetUsername(ctx context.Context, arg SetUsernameParams) error {
+	_, err := q.db.ExecContext(ctx, setUsername, arg.ID, arg.Username)
 	return err
 }

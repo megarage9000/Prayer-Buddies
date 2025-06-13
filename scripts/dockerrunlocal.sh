@@ -1,0 +1,1 @@
+docker run --env-file .env -p 8090:8090 -t -t prayer-buddies-server-dev:latest
