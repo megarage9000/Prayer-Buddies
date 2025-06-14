@@ -63,13 +63,37 @@ func (config *Config) CreateUser(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// 4b. Also create a refresh token
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		message := "Unable to create refresh token"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	createRefreshTokenParams := database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 7),
+		UserID:    user.ID,
+	}
+
+	_, err = config.Database.CreateRefreshToken(req.Context(), createRefreshTokenParams)
+	if err != nil {
+		message := "Unable to upload refresh token"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
 	// 5. Create Response
 	responseBody := UserResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     jsonToken,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        jsonToken,
+		RefreshToken: refreshToken,
 	}
 
 	RespondJSON(resp, req, responseBody, http.StatusOK)
@@ -117,13 +141,37 @@ func (config *Config) LoginUser(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// 4a. Also make refresh token
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		message := "Unable to create refresh token"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	createRefreshTokenParams := database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 7),
+		UserID:    user.ID,
+	}
+
+	_, err = config.Database.CreateRefreshToken(req.Context(), createRefreshTokenParams)
+	if err != nil {
+		message := "Unable to upload refresh token"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
 	// 5. Create Response
 	responseBody := UserResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     jsonToken,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        jsonToken,
+		RefreshToken: refreshToken,
 	}
 
 	RespondJSON(resp, req, responseBody, http.StatusOK)
