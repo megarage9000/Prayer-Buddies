@@ -19,7 +19,7 @@ SELECT refresh_tokens.token, refresh_tokens.user_id FROM refresh_tokens
 WHERE refresh_tokens.user_id = $1 AND 
     (refresh_tokens.revoked_at IS NULL AND refresh_tokens.expires_at > CURRENT_TIMESTAMP);
 
--- name: GetValidRefreshToken :many
+-- name: GetValidRefreshToken :one
 SELECT refresh_tokens.token, refresh_tokens.user_id FROM refresh_tokens
 WHERE refresh_tokens.token = $1 AND 
     (refresh_tokens.revoked_at IS NULL AND refresh_tokens.expires_at > CURRENT_TIMESTAMP);

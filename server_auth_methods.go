@@ -144,8 +144,7 @@ func (config *Config) LoginUser(resp http.ResponseWriter, req *http.Request) {
 
 	// 4a. Also make refresh token
 
-	// - Revoke the current token if it exists
-	fmt.Println("Trying to revoke refresh token")
+	// - Revoke current tokens if they exists
 	message, err := config.RevokeAllRefreshTokensForUser(user.ID, req.Context())
 	if err != nil {
 		LogError(message, err, resp, req, http.StatusInternalServerError)
@@ -193,8 +192,8 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 		// TODO: Do we make a new refresh token for the user if it fails?
 	}
 
-	// 3. Create a new JWT for user
-	userID := result[0].UserID
+	// 3. Create a new JWT for user (Since it returns a bunch of tokens, return the first one)
+	userID := result.UserID
 	jsonToken, err := auth.CreateJWT(userID, config.Secret, ISSUER, TOKEN_EXPIRY)
 	if err != nil {
 		message := fmt.Sprintf("Unable to create JSON for user %s", userID.String())
@@ -204,9 +203,9 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 
 	// 4. Return JWT token
 	payload := struct {
-		token string
+		JWTToken string `json: "jwtToken"`
 	}{
-		token: jsonToken,
+		JWTToken: jsonToken,
 	}
 
 	RespondJSON(resp, req, payload, http.StatusOK)
@@ -269,7 +268,6 @@ func (config *Config) RevokeAllRefreshTokensForUser(user uuid.UUID, ctx context.
 			},
 		}
 
-		fmt.Println("Revoking token at ", refreshToken.Token)
 		err = config.Database.RevokeToken(ctx, revokeTokenParams)
 		if err != nil {
 			return "Unable to revoke token for user", err
