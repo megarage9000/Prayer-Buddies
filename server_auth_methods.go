@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -61,13 +63,38 @@ func (config *Config) CreateUser(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// 4b. Also create a refresh token
+
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		message := "Unable to create refresh token"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	createRefreshTokenParams := database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 7),
+		UserID:    user.ID,
+	}
+
+	_, err = config.Database.CreateRefreshToken(req.Context(), createRefreshTokenParams)
+	if err != nil {
+		message := "Unable to upload refresh token"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
 	// 5. Create Response
 	responseBody := UserResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     jsonToken,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        jsonToken,
+		RefreshToken: refreshToken,
 	}
 
 	RespondJSON(resp, req, responseBody, http.StatusOK)
@@ -115,16 +142,168 @@ func (config *Config) LoginUser(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// 4a. Also make refresh token
+
+	// - Revoke current tokens if they exists
+	message, err := config.RevokeAllRefreshTokensForUser(user.ID, req.Context())
+	if err != nil {
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken, err := config.CreateRefreshTokenForUser(user.ID, req.Context())
+	if err != nil {
+		message := "Unable to create refresh token"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
 	// 5. Create Response
 	responseBody := UserResponse{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     jsonToken,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        jsonToken,
+		RefreshToken: refreshToken,
 	}
 
 	RespondJSON(resp, req, responseBody, http.StatusOK)
+}
+
+/*
+For a given refresh token, refreshes to return a new JWT
+*/
+func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) {
+	// 1. Grab refresh token from header
+	refreshToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		message := "Unable to get refresh token from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Check if the refresh token exists
+	result, err := config.Database.GetValidRefreshToken(req.Context(), refreshToken)
+	if err != nil {
+		message := "Unable to get refresh token from database, might be expired or revoked"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+		// TODO: Do we make a new refresh token for the user if it fails?
+	}
+
+	// 3. Create a new JWT for user (Since it returns a bunch of tokens, return the first one)
+	userID := result.UserID
+	jsonToken, err := auth.CreateJWT(userID, config.Secret, ISSUER, TOKEN_EXPIRY)
+	if err != nil {
+		message := fmt.Sprintf("Unable to create JSON for user %s", userID.String())
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Return JWT token
+	payload := struct {
+		JWTToken string `json: "jwtToken"`
+	}{
+		JWTToken: jsonToken,
+	}
+
+	RespondJSON(resp, req, payload, http.StatusOK)
+}
+
+/*
+Revokes the current refresh token, for a given token
+*/
+func (config *Config) RevokeToken(resp http.ResponseWriter, req *http.Request) {
+
+	// 1. Grab refresh token from header
+	refreshToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		message := "Unable to get refresh token from header"
+		LogError(message, err, resp, req, http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Update the database to revoke the refresh token
+	revokeTokenParams := database.RevokeTokenParams{
+		Token: refreshToken,
+		RevokedAt: sql.NullTime{
+			Time:  time.Now(),
+			Valid: true,
+		},
+	}
+
+	err = config.Database.RevokeToken(req.Context(), revokeTokenParams)
+	if err != nil {
+		message := "Unable to revoke token from header"
+		LogError(message, err, resp, req, http.StatusInternalServerError)
+	}
+
+	// 3. Return a no content header
+	resp.WriteHeader(http.StatusNoContent)
+}
+
+/*
+Helper Function to revoke refresh token for the user, does nothing if the refresh token does not exist
+*/
+
+func (config *Config) RevokeAllRefreshTokensForUser(user uuid.UUID, ctx context.Context) (string, error) {
+
+	refreshTokens, err := config.Database.GetAllValidRefreshTokensForUser(ctx, user)
+
+	// If the user does not have any refresh tokens, auto return
+	if err == sql.ErrNoRows {
+		fmt.Println("Cannot find any revoke tokens to revoke")
+		return "", nil
+	} else if err != nil {
+		return "Error in getting refresh token for user", err
+	}
+
+	for _, refreshToken := range refreshTokens {
+		revokeTokenParams := database.RevokeTokenParams{
+			Token: refreshToken.Token,
+			RevokedAt: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			},
+		}
+
+		err = config.Database.RevokeToken(ctx, revokeTokenParams)
+		if err != nil {
+			return "Unable to revoke token for user", err
+		}
+	}
+
+	return "", nil
+}
+
+/*
+Helper Function that generates a refresh token for the user
+*/
+func (config *Config) CreateRefreshTokenForUser(userID uuid.UUID, ctx context.Context) (string, error) {
+
+	// 1. Get Refresh Token
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		return "", err
+	}
+
+	// 2. Upload Refresh Token to database for user
+	createRefreshToken := database.CreateRefreshTokenParams{
+		Token:     refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Hour * 24), // For now refresh tokens last a day!
+		UserID:    userID,
+	}
+
+	_, err = config.Database.CreateRefreshToken(ctx, createRefreshToken)
+	if err != nil {
+		return "", err
+	}
+
+	// 3. Return Refresh Token
+	return refreshToken, nil
 }
 
 /*

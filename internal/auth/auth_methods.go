@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -81,8 +83,17 @@ func ValidateJWT(tokenString, secret string) (uuid.UUID, error) {
 	return userID, nil
 }
 
-// -- Helper methods --
+// -- Refresh Tokens --
+func MakeRefreshToken() (string, error) {
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("ERROR: Unable to generate bytes: %v", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
 
+// -- Helper methods --
 func GetBearerToken(headers http.Header) (string, error) {
 	token := headers.Get("Authorization") // This will be Bearer TOKEN
 
