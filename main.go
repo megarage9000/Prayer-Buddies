@@ -32,6 +32,7 @@ func main() {
 	serverMux.HandleFunc("POST /api/login", middlewareCORS(config.LoginUser, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/setusername", middlewareCORS(config.SetUsername, config.FrontendURL))
 	serverMux.HandleFunc("/api/refreshToken", middlewareCORS(config.RefreshToken, config.FrontendURL))
+	serverMux.HandleFunc("POST /api/revokeToken", middlewareCORS(config.RevokeToken, config.FrontendURL))
 
 	serverMux.HandleFunc("POST /api/sendprayer", middlewareCORS(config.SendPrayerRequest, config.FrontendURL))
 	serverMux.HandleFunc("/api/receivedRequests", middlewareCORS(config.ListReceivedPrayerRequests, config.FrontendURL))
