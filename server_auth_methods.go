@@ -146,7 +146,7 @@ func (config *Config) LoginUser(resp http.ResponseWriter, req *http.Request) {
 
 	// - Revoke the current token if it exists
 	fmt.Println("Trying to revoke refresh token")
-	message, err := config.RevokeRefreshTokenForUser(user.ID, req.Context())
+	message, err := config.RevokeAllRefreshTokensForUser(user.ID, req.Context())
 	if err != nil {
 		LogError(message, err, resp, req, http.StatusInternalServerError)
 		return
@@ -185,7 +185,7 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 	}
 
 	// 2. Check if the refresh token exists
-	result, err := config.Database.GetRefreshToken(req.Context(), refreshToken)
+	result, err := config.Database.GetValidRefreshToken(req.Context(), refreshToken)
 	if err != nil {
 		message := "Unable to get refresh token from database, might be expired or revoked"
 		LogError(message, err, resp, req, http.StatusUnauthorized)
@@ -194,7 +194,7 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 	}
 
 	// 3. Create a new JWT for user
-	userID := result.UserID
+	userID := result[0].UserID
 	jsonToken, err := auth.CreateJWT(userID, config.Secret, ISSUER, TOKEN_EXPIRY)
 	if err != nil {
 		message := fmt.Sprintf("Unable to create JSON for user %s", userID.String())
@@ -248,9 +248,9 @@ func (config *Config) RevokeToken(resp http.ResponseWriter, req *http.Request) {
 Helper Function to revoke refresh token for the user, does nothing if the refresh token does not exist
 */
 
-func (config *Config) RevokeRefreshTokenForUser(user uuid.UUID, ctx context.Context) (string, error) {
+func (config *Config) RevokeAllRefreshTokensForUser(user uuid.UUID, ctx context.Context) (string, error) {
 
-	refreshToken, err := config.Database.GetRefreshTokenForUser(ctx, user)
+	refreshTokens, err := config.Database.GetAllValidRefreshTokensForUser(ctx, user)
 
 	// If the user does not have any refresh tokens, auto return
 	if err == sql.ErrNoRows {
@@ -260,18 +260,20 @@ func (config *Config) RevokeRefreshTokenForUser(user uuid.UUID, ctx context.Cont
 		return "Error in getting refresh token for user", err
 	}
 
-	revokeTokenParams := database.RevokeTokenParams{
-		Token: refreshToken.Token,
-		RevokedAt: sql.NullTime{
-			Time:  time.Now(),
-			Valid: true,
-		},
-	}
+	for _, refreshToken := range refreshTokens {
+		revokeTokenParams := database.RevokeTokenParams{
+			Token: refreshToken.Token,
+			RevokedAt: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			},
+		}
 
-	fmt.Println("Revoking token at ", refreshToken.Token)
-	err = config.Database.RevokeToken(ctx, revokeTokenParams)
-	if err != nil {
-		return "Unable to revoke token for user", err
+		fmt.Println("Revoking token at ", refreshToken.Token)
+		err = config.Database.RevokeToken(ctx, revokeTokenParams)
+		if err != nil {
+			return "Unable to revoke token for user", err
+		}
 	}
 
 	return "", nil

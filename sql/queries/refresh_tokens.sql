@@ -10,15 +10,19 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetRefreshTokenForUser :one
+-- name: GetAllRefreshTokensForUser :many
+SELECT refresh_tokens.token, refresh_tokens.user_id FROM refresh_tokens
+WHERE refresh_tokens.user_id = $1;
+
+-- name: GetAllValidRefreshTokensForUser :many
 SELECT refresh_tokens.token, refresh_tokens.user_id FROM refresh_tokens
 WHERE refresh_tokens.user_id = $1 AND 
-    (refresh_tokens.revoked_at IS NOT NULL AND refresh_tokens.expires_at >= CURRENT_TIMESTAMP);
+    (refresh_tokens.revoked_at IS NULL AND refresh_tokens.expires_at > CURRENT_TIMESTAMP);
 
--- name: GetRefreshToken :one
+-- name: GetValidRefreshToken :many
 SELECT refresh_tokens.token, refresh_tokens.user_id FROM refresh_tokens
 WHERE refresh_tokens.token = $1 AND 
-    (refresh_tokens.revoked_at IS NOT NULL AND refresh_tokens.expires_at >= CURRENT_TIMESTAMP);
+    (refresh_tokens.revoked_at IS NULL AND refresh_tokens.expires_at > CURRENT_TIMESTAMP);
 
 -- name: RevokeToken :exec
 UPDATE refresh_tokens
