@@ -346,3 +346,22 @@ func (config *Config) SetUsername(resp http.ResponseWriter, req *http.Request) {
 
 	resp.WriteHeader(http.StatusAccepted)
 }
+
+// --- Helper functions --- //
+
+// Function to grab a userID from http header
+func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) {
+
+	token, err := auth.GetBearerToken(header)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to get bearer token")
+	}
+
+	user, err := auth.ValidateJWT(token, config.Secret)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("ERROR: unable to validate jwt")
+	}
+
+	return user, nil
+}
+
