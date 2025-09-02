@@ -176,12 +176,20 @@ For a given refresh token, refreshes to return a new JWT
 */
 func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) {
 	// 1. Grab refresh token from header
-	refreshToken, err := auth.GetBearerToken(req.Header)
+	// refreshToken, err := auth.GetBearerToken(req.Header)
+	// if err != nil {
+	// 	message := "Unable to get refresh token from header"
+	// 	LogError(message, err, resp, req, http.StatusUnauthorized)
+	// 	return
+	// }
+	cookie, err := req.Cookie("refreshtoken")
 	if err != nil {
-		message := "Unable to get refresh token from header"
-		LogError(message, err, resp, req, http.StatusUnauthorized)
+		message := "Unable to grab cookie from response"
+		LogError(message, err, resp, req, http.StatusBadRequest)
 		return
 	}
+
+	refreshToken := cookie.Value
 
 	// 2. Check if the refresh token exists
 	result, err := config.Database.GetValidRefreshToken(req.Context(), refreshToken)
@@ -208,6 +216,7 @@ func (config *Config) RefreshToken(resp http.ResponseWriter, req *http.Request) 
 		JWTToken: jsonToken,
 	}
 
+	fmt.Println("Successfully refreshed token!")
 	RespondJSON(resp, req, payload, http.StatusOK)
 }
 
@@ -367,7 +376,7 @@ func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) 
 
 func SetCookie(refreshToken string, resp http.ResponseWriter) {
 	http.SetCookie(resp, &http.Cookie{
-		Name:     "refresh_token",
+		Name:     "refreshToken",
 		Value:    refreshToken,
 		HttpOnly: true,
 		Secure:   true,

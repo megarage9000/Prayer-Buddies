@@ -11,7 +11,7 @@ import (
 
 const TOKEN_EXPIRY = time.Hour
 const ISSUER = "Prayer Buddies"
-const REFRESH_ENDPOINT = "/api/refreshToken"
+const REFRESH_ENDPOINT = "POST /api/refreshToken"
 
 func main() {
 

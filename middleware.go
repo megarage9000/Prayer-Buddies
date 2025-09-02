@@ -17,6 +17,7 @@ func middlewareCORS(next http.HandlerFunc, allowedOrigin string) http.HandlerFun
 
 		resp.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		resp.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		resp.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		// Handle OPTIONS preflight
 		if req.Method == http.MethodOptions {
