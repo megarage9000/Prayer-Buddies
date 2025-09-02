@@ -365,3 +365,14 @@ func GrabUserIDFromHeader(header http.Header, config Config) (uuid.UUID, error) 
 	return user, nil
 }
 
+func SetCookie(refreshToken string, resp http.ResponseWriter) {
+	http.SetCookie(resp, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     REFRESH_ENDPOINT,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+	})
+}

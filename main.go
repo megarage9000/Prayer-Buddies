@@ -11,6 +11,7 @@ import (
 
 const TOKEN_EXPIRY = time.Hour
 const ISSUER = "Prayer Buddies"
+const REFRESH_ENDPOINT = "/api/refreshToken"
 
 func main() {
 
@@ -31,7 +32,7 @@ func main() {
 	serverMux.HandleFunc("POST /api/users", middlewareCORS(config.CreateUser, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/login", middlewareCORS(config.LoginUser, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/setusername", middlewareCORS(config.SetUsername, config.FrontendURL))
-	serverMux.HandleFunc("/api/refreshToken", middlewareCORS(config.RefreshToken, config.FrontendURL))
+	serverMux.HandleFunc(REFRESH_ENDPOINT, middlewareCORS(config.RefreshToken, config.FrontendURL))
 	serverMux.HandleFunc("POST /api/revokeToken", middlewareCORS(config.RevokeToken, config.FrontendURL))
 
 	serverMux.HandleFunc("POST /api/sendprayer", middlewareCORS(config.SendPrayerRequest, config.FrontendURL))
